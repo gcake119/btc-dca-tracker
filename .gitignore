@@ -1,0 +1,48 @@
+# 操作系統檔案
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# 編輯器設定與快取
+.idea/
+.vscode/
+*.swp
+*.swo
+*.bak
+
+# Node.js 相關（如本地測試、日後引入 npm 工具）
+node_modules/
+npm-debug.log
+yarn-error.log
+package-lock.json
+.pnpm-debug.log
+
+# 其他緩存與暫存
+.cache/
+.tmp/
+dist/
+
+# 前端編譯或建構輸出（如有使用工具時）
+build/
+coverage/
+*.log
+
+# 影像、文件等大型暫存
+*.psd
+*.zip
+*.rar
+
+# 環境設定檔案（如 API key，本專案建議用環境變數或 .env.local 不上版控時）
+.env
+.env.*
+
+# macOS Spotlight
+.Spotlight-V100
+.Trashes
+
+# Windows
+ehthumbs.db
+Thumbs.db
+
+# 其他自訂：如不想同步 assets/ 下的測試圖片
+assets/sample-*
