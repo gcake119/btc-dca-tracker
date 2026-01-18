@@ -20,10 +20,36 @@
 ## 3. 功能需求（FR）
 
 ### 3.1 帳號與身分管理
-- 首次註冊須 Google OAuth，取得 Google 帳號與 Sheets 權限。
-- Google 試算表內建 user_profile 表：紀錄 google_uid、web3 address 清單。
-- 用戶可綁定/解除 Web3 錢包（EVM/Cardano），以簽名驗證地址所有權。
-- 登入可選 Google or Web3 錢包（由前端將地址與 user_profile 關聯）。
+
+#### 認證方式演進
+
+本系統採用**多階段認證策略**，逐步增加認證方式：
+
+| 階段 | 認證方式 | 說明 |
+|------|---------|------|
+| **Phase 1-2** | 密碼登入 | 使用環境變數 `AUTH_PASSWORD` 進行簡單密碼驗證，適合個人使用 |
+| **Phase 3** | 密碼 + Google OAuth 2.0 | 新增 Google 登入，取得 Google 帳號與 Sheets 權限 |
+| **Phase 4** | 密碼 + Google + Web3 錢包 | 新增 Web3 錢包簽名驗證（EVM/Cardano） |
+
+#### Phase 1-2：密碼登入（當前實作）
+
+- 後端環境變數設定 `AUTH_PASSWORD`
+- 使用者僅需輸入 `password` 登入（個人工具，無需 userId）
+- 後端驗證密碼後發放 JWT token
+- 所有 API 請求需在 Header 帶入 `Authorization: Bearer <token>`
+- **適用場景**：個人工具、快速開發、單使用者部署
+
+#### Phase 3：Google OAuth 整合（未來實作）
+
+- 首次註冊須 Google OAuth，取得 Google 帳號與 Sheets 權限
+- Google 試算表內建 user_profile 表：紀錄 google_uid、web3 address 清單
+- 登入可選密碼或 Google OAuth
+
+#### Phase 4：Web3 錢包整合（未來實作）
+
+- 用戶可綁定/解除 Web3 錢包（EVM/Cardano），以簽名驗證地址所有權
+- 登入可選：密碼 or Google or Web3 錢包（由前端將地址與 user_profile 關聯）
+- Web3 登入僅在前端做簽名驗證，不保存私鑰
 
 ### 3.2 DCA 輸入與資料來源（僅現貨）
 - 支援手動輸入與 CSV 匯入（瀏覽器端處理）。
@@ -223,6 +249,19 @@ date,exchange,pair,side,baseAsset,quoteAsset,baseAmount,quoteAmount,price,feeAss
 
 ### 6.2 API 端點設計
 
+#### 認證
+
+| 方法 | 端點 | 說明 | 請求體 | 回應 |
+| --- | --- | --- | --- | --- |
+| POST | `/api/auth/login` | 使用者登入 | `{ password }` | `{ success, token, expiresIn }` |
+
+**認證流程：**
+
+1. 使用者以 `password` 呼叫 `/api/auth/login`
+2. 後端驗證密碼（與 `AUTH_PASSWORD` 環境變數比對）
+3. 驗證成功後發放 JWT token（有效期 24 小時）
+4. 後續所有 API 請求需在 Header 帶入 `Authorization: Bearer <token>`
+
 #### 交易管理
 
 | 方法 | 端點 | 說明 | 請求體 | 回應 |
@@ -231,6 +270,8 @@ date,exchange,pair,side,baseAsset,quoteAsset,baseAmount,quoteAmount,price,feeAss
 | POST | `/api/trades/:userId` | 新增交易 | Trade 物件 | `{ id, ...trade, timestamp }` |
 | PUT | `/api/trades/:userId/:tradeId` | 更新交易 | 更新欄位 | 更新後的 Trade |
 | DELETE | `/api/trades/:userId/:tradeId` | 刪除交易 | 無 | `{ success: true }` |
+
+**注意**：所有交易管理端點需要認證（Phase 1-2 起）
 
 #### 匯入/匯出
 
@@ -308,9 +349,11 @@ Zeabur (CI/CD 自動部署)
     ↓
 調用 TradeAPI 客户端（apiClient.js）
     ↓
-HTTP 請求（POST/PUT/DELETE /api/trades/:userId）
+HTTP 請求（附帶 Authorization: Bearer <token>）
     ↓
 後端 Express Router
+    ↓
+認證中間件（驗證 JWT token）
     ↓
 FileStorageService（讀寫 storage 目錄）
     ↓
@@ -321,7 +364,47 @@ JSON 檔案（user@example.com.json）
 前端更新 UI（即時顯示）
 ```
 
-### 6.6 關鍵設計決策
+### 6.6 認證與授權機制
+
+#### Phase 1-2：簡單密碼驗證
+
+**環境變數設定：**
+
+```bash
+AUTH_PASSWORD=your-secure-password-2026
+JWT_SECRET=your-jwt-secret-key
+```
+
+**JWT Token 規格：**
+
+- **演算法**：HS256
+- **有效期**：24 小時
+- **Payload**：
+  ```json
+  {
+    "authenticated": true,
+    "iat": 1737194460,
+    "exp": 1737280860
+  }
+  ```
+
+**認證流程：**
+
+1. 使用者輸入 `password`
+2. 後端比對 `password` 與 `AUTH_PASSWORD`
+3. 驗證通過，簽發 JWT token
+4. 前端儲存 token（sessionStorage 或 memory）
+5. 後續請求帶入 `Authorization: Bearer <token>`
+6. 後端中間件驗證 token 有效性
+
+**安全性建議：**
+
+- 使用強密碼（12+ 字元，混合大小寫、數字、符號）
+- 不要將密碼硬編碼或提交到 Git
+- 定期更新密碼
+- 開發環境與正式環境使用不同密碼
+
+### 6.7 關鍵設計決策
 
 #### 為什麼分離後端？
 

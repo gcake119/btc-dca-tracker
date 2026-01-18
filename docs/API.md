@@ -51,11 +51,51 @@
 
 ## 認證
 
-**Phase 1-2**：無需認證，使用 `userId`（email 格式）作為識別
+本系統採用多階段認證策略：
 
-**Phase 3**：將支援 Google OAuth 2.0
+| 階段 | 認證方式 |
+|------|---------|
+| Phase 1-2 | 密碼登入（`AUTH_PASSWORD`） |
+| Phase 3 | 密碼 + Google OAuth 2.0 |
+| Phase 4 | 密碼 + Google OAuth + Web3 錢包簽名 |
 
-**Phase 4**：將支援 Web3 錢包簽名驗證
+### 登入
+
+驗證使用者身份並取得 token（個人工具，僅需密碼）。
+
+**端點**：`POST /auth/login`
+
+**請求參數**：
+```json
+{
+  "password": "your-password"
+}
+```
+
+**成功回應**（200 OK）：
+```json
+{
+  "success": true,
+  "token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...",
+  "expiresIn": 86400
+}
+```
+
+**錯誤回應**（401 Unauthorized）：
+```json
+{
+  "error": "Invalid credentials"
+}
+```
+
+### 使用 Token
+
+後續 API 請求需在 Header 中帶入 token：
+
+```bash
+curl -X GET http://localhost:3000/api/trades/user@example.com \
+  -H "Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
+```
 
 ---
 
@@ -742,10 +782,34 @@ curl -X DELETE http://localhost:3000/api/trades/alice@example.com/trade_17048736
 ```javascript
 // API 客戶端配置
 const API_BASE_URL = 'http://localhost:3000/api';
+let authToken = null;
+
+// 登入（個人工具，僅需密碼）
+async function login(password) {
+  const response = await fetch(`${API_BASE_URL}/auth/login`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({ password }),
+  });
+  
+  if (!response.ok) {
+    throw new Error('Login failed');
+  }
+  
+  const data = await response.json();
+  authToken = data.token; // 儲存 token
+  return data;
+}
 
 // 取得所有交易
 async function getTrades(userId) {
-  const response = await fetch(`${API_BASE_URL}/trades/${userId}`);
+  const response = await fetch(`${API_BASE_URL}/trades/${userId}`, {
+    headers: {
+      'Authorization': `Bearer ${authToken}`,
+    },
+  });
   if (!response.ok) {
     throw new Error('Failed to fetch trades');
   }
@@ -758,6 +822,7 @@ async function createTrade(userId, tradeData) {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
+      'Authorization': `Bearer ${authToken}`,
     },
     body: JSON.stringify(tradeData),
   });
@@ -776,6 +841,7 @@ async function updateTrade(userId, tradeId, updates) {
     method: 'PUT',
     headers: {
       'Content-Type': 'application/json',
+      'Authorization': `Bearer ${authToken}`,
     },
     body: JSON.stringify(updates),
   });
@@ -791,6 +857,9 @@ async function updateTrade(userId, tradeId, updates) {
 async function deleteTrade(userId, tradeId) {
   const response = await fetch(`${API_BASE_URL}/trades/${userId}/${tradeId}`, {
     method: 'DELETE',
+    headers: {
+      'Authorization': `Bearer ${authToken}`,
+    },
   });
   
   if (!response.ok) {
@@ -805,6 +874,10 @@ async function example() {
   const userId = 'user@example.com';
   
   try {
+    // 先登入（個人工具，僅需密碼）
+    await login('your-password');
+    console.log('Login successful');
+    
     // 新增交易
     const newTrade = await createTrade(userId, {
       date: '2026-01-18',
