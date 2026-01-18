@@ -45,7 +45,7 @@
 
 詳見 [STRUCTURE.md](./STRUCTURE.md)
 
-```
+```text
 btc-dca-tracker/
 ├── frontend/              # 前端應用程式
 │   ├── public/           # HTML 入口
@@ -57,7 +57,7 @@ btc-dca-tracker/
 │   ├── docs/             # 後端文檔
 │   └── package.json
 ├── docs/                 # 部署與集成指南
-├── spec/                 # 規格書 (SSD)
+├── spec/                 # 規格書
 └── README.md
 ```
 
@@ -140,12 +140,19 @@ pm2 startup
 
 ## 📋 開發階段
 
-| 階段 | 狀態 | 功能 | 存儲方案 |
-|------|------|------|----------|
-| **Phase 1** | ✅ 完成 | 前端 UI + 後端 API 基礎架構 | 本地 JSON 檔案 |
-| **Phase 2** | 🚧 進行中 | CSV 匯入/匯出 + UI 完善 | 本地 JSON + CSV |
-| **Phase 3** | 📅 規劃中 | Google Sheets 整合 | Google Sheets API |
-| **Phase 4** | 📅 未來 | Web3 錢包登入 + BTC 本位分析 | Google Sheets (主) |
+本專案採用多階段開發策略，逐步實現完整功能。詳細進度請參考 [TODO.md](./TODO.md)，階段性更新記錄請見 [CHANGELOG.md](./CHANGELOG.md)。
+
+| 階段 | 功能 | 認證方式 | 存儲方案 |
+|------|------|----------|----------|
+| **Phase 1** | 前端 UI + 後端 API 基礎架構 | 密碼登入 | 本地 JSON 檔案 |
+| **Phase 2** | CSV 匯入/匯出 + UI 完善 | 密碼登入 | 本地 JSON + CSV |
+| **Phase 3** | Google OAuth 整合 | 密碼 + Google OAuth | Google Sheets API |
+| **Phase 4** | Web3 錢包 + BTC 本位分析 | 密碼 + Google + Web3 錢包 | Google Sheets (主) |
+
+**認證方式演進：**
+- **Phase 1-2**：簡單密碼登入（環境變數 `AUTH_PASSWORD`），適合個人使用
+- **Phase 3**：新增 Google OAuth 2.0，支援 Google Sheets 同步
+- **Phase 4**：新增 Web3 錢包簽名驗證（EVM/Cardano）
 
 ---
 
@@ -170,48 +177,22 @@ pm2 startup
 
 ## 📊 資料格式
 
-### CSV 匯入範本
+本系統支援 **CSV** 與 **JSON** 兩種資料格式：
+
+| 格式 | 用途 |
+|------|------|
+| **CSV** | 匯入/匯出、Excel 編輯 |
+| **JSON** | 內部存儲、完整備份 |
+
+**快速範例：**
 
 ```csv
-date,exchange,pair,side,baseAsset,quoteAsset,baseAmount,quoteAmount,price,feeAsset,feeAmount,notes
-2025-01-10,Binance,ADA/BTC,BUY,ADA,BTC,100,0.005,0.00005,ADA,0.1,First DCA
-2025-01-15,OKX,BTC/USDT,BUY,BTC,USDT,0.5,21500,43000,USDT,10.75,Monthly DCA
-2025-02-01,Kraken,ETH/BTC,BUY,ETH,BTC,2,0.04,0.02,ETH,0.002,Altcoin rotation
+date,exchange,pair,side,baseAsset,quoteAsset,baseAmount,quoteAmount
+2025-01-10,Binance,ADA/BTC,BUY,ADA,BTC,100,0.005
+2025-01-15,OKX,BTC/USDT,BUY,BTC,USDT,0.5,21500
 ```
 
-### JSON 資料結構
-
-```json
-{
-  "metadata": {
-    "version": "1.0.0",
-    "userId": "user@example.com",
-    "exportDate": "2026-01-18T10:30:00Z"
-  },
-  "trades": [
-    {
-      "id": "trade_1704873600000",
-      "date": "2025-01-10",
-      "timestamp": 1704873600000,
-      "exchange": "Binance",
-      "pair": "ADA/BTC",
-      "side": "BUY",
-      "baseAsset": "ADA",
-      "quoteAsset": "BTC",
-      "baseAmount": 100,
-      "quoteAmount": 0.005,
-      "price": 0.00005,
-      "feeAsset": "ADA",
-      "feeAmount": 0.1,
-      "notes": "First DCA"
-    }
-  ],
-  "wallets": []
-}
-```
-
-詳見：[spec/sample-csv.md](./spec/sample-csv.md)
-
+📖 **完整格式說明請參考**：[docs/DATA_FORMAT.md](./docs/DATA_FORMAT.md)
 
 ---
 
