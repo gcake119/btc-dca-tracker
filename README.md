@@ -1,64 +1,262 @@
 # btc-dca-tracker
 
-A modern web-based portfolio tracker for long-term Bitcoin accumulation, supporting spot DCA and altcoin/BTC base strategy.  
-Built with pure HTML/CSS/JavaScript. Supports Google Sheets personal data storage, Ethereum/Cardano wallet login, and CSV import—no backend required.
+> 一個以 **BTC 為本位** 的現貨 DCA 記帳與分析工具
 
-## Features
+專為實踐「穩定現金流 + 現貨 DCA + altcoin/BTC 輪動」策略設計，協助你衡量**最終累積了多少 BTC**。
 
-- **Spot DCA Accounting**  
-  Quickly log, view, and analyze your spot crypto purchases (BTC, ADA, and more).  
-- **BTC-Based Portfolio View**  
-  Uniquely display all assets and performance in BTC terms—a must for serious crypto accumulators.  
-- **Multiple Input Methods**  
-  Manual entry, CSV upload (format provided), Google Sheets sync, and wallet-linked records.
-- **Google Sheets Integration**  
-  Each user’s data stored securely in their own Google Sheet—privacy first, cross-device ready.
-- **Web3 Wallet Binding**  
-  Bind Ethereum or Cardano wallets for decentralized login and future automation.
-- **No Derivatives Support**  
-  Only spot transactions supported; contracts and leverage excluded for simplicity and risk control.
-- **Responsive & Open Source**  
-  Runs on desktop and mobile. Easy deploy via GitHub Pages or Zeabur.
-
-## Getting Started
-
-1. **Clone this repo**
-
-```bash
-git clone https://github.com/YOUR_USERNAME/btc-dca-tracker.git
-```
-
-2. **Host on GitHub Pages or Zeabur**
-- Push your changes.
-- Enable Pages from repo settings or connect via Zeabur.
-3. **Login & Setup**
-- Login with Google (OAuth, Sheets access required on first use).
-- Optionally bind your Ethereum/Cardano wallet.
-- Start entering or importing your spot trades.
-
-## CSV Format
-
-CSV template for importing history:
-
-```csv
-date,exchange,pair,side,base_amount,quote_amount,price,fee,notes
-2025-01-10,Binance,ADA/BTC,BUY,100,0.005,0.00005,ADA,First DCA
-...
-```
-
-
-## Contributing
-
-Feel free to fork, open issues, or submit pull requests for new features, bug fixes, and improvements.  
-We follow Airbnb JS Style Guide—please lint your code and maintain clear commit history.
-
-## License
-
-MIT
+使用純 HTML/CSS/JavaScript + Node.js Express 構建，支援本地檔案存儲、CSV 導入/導出，**完全開源**。
 
 ---
 
-## Support This Project
+## ✨ 核心特色
+
+### 📊 BTC 本位計算
+
+- **唯一以 BTC 為基準** 顯示所有資產和收益
+- 追蹤「總資產折合 BTC」與「歷史 DCA 成本（BTC 計價）」
+- 對比策略績效：現實成果 vs 理論全 BTC 持有
+
+### 💰 現貨 DCA 記帳
+
+- 快速記錄現貨加密貨幣購買（BTC、ETH、ADA 等）
+- 支援法幣→BTC、altcoin/BTC 交易對
+- **僅支援現貨交易**，不支援槓桿與合約
+
+### 📁 多種資料管理
+
+- **手動輸入**：快速新增交易記錄
+- **CSV 匯入**：批量導入交易歷史
+- **JSON 匯出**：完整資料備份
+- 本地檔案存儲（未來支援 Google Sheets 同步）
+
+### 🔐 隱私優先
+
+- 後端檔案系統存儲，資料完全掌控
+- 可本機運行，無需上傳雲端
+- 完全開源，可審計代碼
+
+### 🚀 輕量部署
+
+- 前端：純靜態網頁（GitHub Pages / Vercel）
+- 後端：Node.js Express（Zeabur / Heroku / 自有伺服器）
+- 無需資料庫，JSON 檔案存儲即可運行
+
+## Project Structure
+
+詳見 [STRUCTURE.md](./STRUCTURE.md)
+
+```
+btc-dca-tracker/
+├── frontend/              # 前端應用程式
+│   ├── public/           # HTML 入口
+│   ├── src/              # JavaScript & CSS 原始檔
+│   └── package.json
+├── backend/              # 後端 API 伺服器
+│   ├── src/              # Express 伺服器
+│   ├── storage/          # 本機資料存儲
+│   ├── docs/             # 後端文檔
+│   └── package.json
+├── docs/                 # 部署與集成指南
+├── spec/                 # 規格書 (SSD)
+└── README.md
+```
+
+---
+
+## 🚀 快速開始
+
+### 本地開發（推薦開始方式）
+
+#### 1. 啟動後端
+
+```bash
+cd backend
+npm install
+npm run dev
+# 後端運行於 http://localhost:3000
+```
+
+#### 2. 啟動前端
+
+```bash
+cd frontend
+python3 -m http.server 5500 --directory ./public
+# 前端運行於 http://localhost:5500
+```
+
+#### 3. 開始使用
+
+1. 在瀏覽器訪問 `http://localhost:5500`
+2. 輸入 User ID（例如：`user@example.com`）
+3. 開始新增交易記錄！
+
+**成本**: $0 | **難度**: ⭐ 簡單 | **存儲**: 本地 JSON 檔案
+
+---
+
+### 線上部署（自架方案）
+
+#### 方案 A：GitHub Pages + Zeabur
+
+1. **部署後端到 Zeabur**
+
+   ```bash
+   # Fork 此專案
+   # 在 Zeabur 連接你的 GitHub repo
+   # 選擇 backend 資料夾部署
+   # 記下後端 URL：https://your-app.zeabur.app
+   ```
+
+2. **部署前端到 GitHub Pages**
+
+   ```bash
+   # 修改 frontend/src/config/api.js
+   # 將 API_BASE_URL 改為你的 Zeabur URL
+   # 推送到 GitHub，啟用 Pages
+   ```
+
+**成本**: $0-5/月 | **難度**: ⭐⭐ | **控制**: 完全自主
+
+#### 方案 B：本地伺服器運行
+
+```bash
+# 使用 PM2 持久化運行
+cd backend
+npm install -g pm2
+pm2 start src/server.js --name btc-tracker
+pm2 save
+pm2 startup
+```
+
+**成本**: $0 | **難度**: ⭐⭐⭐ | **隱私**: 最高
+
+詳見：
+
+- [frontend/README.md](./frontend/README.md) - 前端開發指南
+- [backend/README.md](./backend/README.md) - 後端開發指南
+- [docs/deployment.md](./docs/deployment.md) - 完整部署教學
+
+---
+
+## 📋 開發階段
+
+| 階段 | 狀態 | 功能 | 存儲方案 |
+|------|------|------|----------|
+| **Phase 1** | ✅ 完成 | 前端 UI + 後端 API 基礎架構 | 本地 JSON 檔案 |
+| **Phase 2** | 🚧 進行中 | CSV 匯入/匯出 + UI 完善 | 本地 JSON + CSV |
+| **Phase 3** | 📅 規劃中 | Google Sheets 整合 | Google Sheets API |
+| **Phase 4** | 📅 未來 | Web3 錢包登入 + BTC 本位分析 | Google Sheets (主) |
+
+---
+
+## 📚 文檔與資源
+
+### 核心文檔
+
+- 📖 [SPECIFICATION.md](./spec/SPECIFICATION.md) - 完整規格書
+- 🏗️ [STRUCTURE.md](./STRUCTURE.md) - 專案結構說明
+- 📝 [TODO.md](./TODO.md) - 開發待辦事項
+
+### API 文檔
+
+- 🔌 [backend/README.md](./backend/README.md) - API 端點說明
+- 🎨 [frontend/README.md](./frontend/README.md) - 前端架構
+
+### 部署指南
+
+- 🚀 [docs/deployment.md](./docs/deployment.md) - 部署選項指南
+
+---
+
+## 📊 資料格式
+
+### CSV 匯入範本
+
+```csv
+date,exchange,pair,side,baseAsset,quoteAsset,baseAmount,quoteAmount,price,feeAsset,feeAmount,notes
+2025-01-10,Binance,ADA/BTC,BUY,ADA,BTC,100,0.005,0.00005,ADA,0.1,First DCA
+2025-01-15,OKX,BTC/USDT,BUY,BTC,USDT,0.5,21500,43000,USDT,10.75,Monthly DCA
+2025-02-01,Kraken,ETH/BTC,BUY,ETH,BTC,2,0.04,0.02,ETH,0.002,Altcoin rotation
+```
+
+### JSON 資料結構
+
+```json
+{
+  "metadata": {
+    "version": "1.0.0",
+    "userId": "user@example.com",
+    "exportDate": "2026-01-18T10:30:00Z"
+  },
+  "trades": [
+    {
+      "id": "trade_1704873600000",
+      "date": "2025-01-10",
+      "timestamp": 1704873600000,
+      "exchange": "Binance",
+      "pair": "ADA/BTC",
+      "side": "BUY",
+      "baseAsset": "ADA",
+      "quoteAsset": "BTC",
+      "baseAmount": 100,
+      "quoteAmount": 0.005,
+      "price": 0.00005,
+      "feeAsset": "ADA",
+      "feeAmount": 0.1,
+      "notes": "First DCA"
+    }
+  ],
+  "wallets": []
+}
+```
+
+詳見：[spec/sample-csv.md](./spec/sample-csv.md)
+
+
+---
+
+## 🛠️ 技術棧
+
+### 前端
+
+- 純 HTML/CSS/JavaScript（無框架依賴）
+- Chart.js（圖表視覺化）
+- PapaParse（CSV 解析）
+
+### 後端
+
+- Node.js + Express.js
+- 檔案系統存儲（JSON 格式）
+- CORS 中間件
+
+### 部署
+
+- 前端：GitHub Pages / Vercel / Netlify
+- 後端：Zeabur / Heroku / Railway / 自有伺服器
+- 儲存：本地檔案系統（未來支援 Google Sheets）
+
+---
+
+## 🤝 貢獻指南
+
+歡迎 Fork、開 Issue 或提交 Pull Request！
+
+**開發規範：**
+
+- 遵循 Airbnb JavaScript Style Guide
+- 提交前請執行 lint 檢查
+- 保持清晰的 commit 歷史
+- 詳見：[CONTRIBUTING.md](./CONTRIBUTING.md)
+
+---
+
+## 📄 授權
+
+MIT License - 詳見 [LICENSE](./LICENSE)
+
+---
+
+## 💖 支持此專案
 
 If you find this tool helpful or want to support my work, consider contributing:
 
